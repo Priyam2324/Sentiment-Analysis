@@ -4,5 +4,5 @@ numpy
 nltk
 tqdm
 joblib
-scikit-learn==1.1.3
+scikit-learn
 lightgbm
