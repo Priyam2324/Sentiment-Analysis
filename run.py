@@ -2,6 +2,7 @@ from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch
 import streamlit as st
 import numpy as np
+import torch.nn.functional as F
 
 # Set device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -17,14 +18,17 @@ st.title("🎯 Review Sentiment Predictor")
 # Input area
 review_input = st.text_area("Enter your review below:", height=200)
 
-# Predict function
+# Predict function with probability
 def predict_sentiment(text):
     inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True, max_length=256).to(device)
     with torch.no_grad():
         outputs = model(**inputs)
         logits = outputs.logits
+        probs = F.softmax(logits, dim=1)
+        positive_prob = probs[0][1].item()
         predicted_class = torch.argmax(logits, dim=1).item()
-    return "Positive" if predicted_class == 1 else "Negative"
+    sentiment = "Positive" if predicted_class == 1 else "Negative"
+    return sentiment, positive_prob * 100  # return percentage
 
 # Submit button
 if st.button("Submit"):
@@ -32,6 +36,7 @@ if st.button("Submit"):
         st.warning("⚠️ Please enter some text to analyze.")
     else:
         with st.spinner("🔍 Processing... Please wait..."):
-            prediction = predict_sentiment(review_input)
+            prediction, score = predict_sentiment(review_input)
         st.success("✅ Done!")
         st.markdown(f"### 📊 Prediction: **{prediction}**")
+        st.markdown(f"### ⭐ Review Score: **{score:.2f}% Positive**")
