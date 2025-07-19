@@ -3,10 +3,13 @@ import torch
 import streamlit as st
 import numpy as np
 
+# Set device
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 # Load model and tokenizer
 model_path = "./minilm-model"
 tokenizer = AutoTokenizer.from_pretrained(model_path)
-model = AutoModelForSequenceClassification.from_pretrained(model_path)
+model = AutoModelForSequenceClassification.from_pretrained(model_path).to(device)
 model.eval()
 
 st.title("🎯 Review Sentiment Predictor")
@@ -16,7 +19,7 @@ review_input = st.text_area("Enter your review below:", height=200)
 
 # Predict function
 def predict_sentiment(text):
-    inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True, max_length=256)
+    inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True, max_length=256).to(device)
     with torch.no_grad():
         outputs = model(**inputs)
         logits = outputs.logits
